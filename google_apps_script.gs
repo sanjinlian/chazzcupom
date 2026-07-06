@@ -118,11 +118,44 @@ function doPost(e) {
   }
 
   const memberId = requestData.id;
+  const action = requestData.action || 'redeem';
+  const points = parseInt(requestData.points, 10) || 0;
+  const name = requestData.name || '';
+
   if (!memberId) {
     return output.setContent(JSON.stringify({ success: false, message: 'Missing Member ID in request body.' }));
   }
 
   const row = findMemberRow(memberId);
+
+  if (action === 'topup') {
+    if (row === -1) {
+      // Create new member
+      const sheet = getMembersSheet();
+      sheet.appendRow([memberId, name, points]);
+      return output.setContent(JSON.stringify({ success: true, remaining: points, isNew: true }));
+    } else {
+      // Add points to existing member
+      const memberData = getMemberData(row);
+      if (memberData && memberData.error) {
+        return output.setContent(JSON.stringify({ success: false, message: memberData.error }));
+      }
+      const newRemaining = memberData.remaining + points;
+      // Optionally update name if provided
+      if (name && memberData.name !== name) {
+          const sheet = getMembersSheet();
+          sheet.getRange(row, NAME_COL).setValue(name);
+      }
+      const updateSuccess = updateRemaining(row, newRemaining);
+      if (updateSuccess) {
+        return output.setContent(JSON.stringify({ success: true, remaining: newRemaining, isNew: false }));
+      } else {
+        return output.setContent(JSON.stringify({ success: false, message: 'Failed to update remaining count.' }));
+      }
+    }
+  }
+
+  // default: action === 'redeem'
   if (row === -1) {
     return output.setContent(JSON.stringify({ success: false, message: 'Member not found.' }));
   }

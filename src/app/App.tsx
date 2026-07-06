@@ -10,7 +10,8 @@ import {
   Loader2,
   Gift,
   Coffee,
-  ExternalLink
+  ExternalLink,
+  PlusCircle
 } from "lucide-react";
 import { Button } from "./components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./components/ui/card";
@@ -42,6 +43,14 @@ export default function App() {
   const [genId, setGenId] = useState("");
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [settingsUrl, setSettingsUrl] = useState(webAppUrl);
+
+  // Topup States
+  const [topupId, setTopupId] = useState("");
+  const [topupName, setTopupName] = useState("");
+  const [topupPoints, setTopupPoints] = useState("10");
+  const [topupLoading, setTopupLoading] = useState(false);
+  const [topupError, setTopupError] = useState<string | null>(null);
+  const [topupSuccess, setTopupSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -85,7 +94,7 @@ export default function App() {
       const res = await fetch(webAppUrl, {
         method: "POST",
         headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({ id: memberData.id })
+        body: JSON.stringify({ action: "redeem", id: memberData.id })
       });
       const data = await res.json();
       if (data.success) {
@@ -106,6 +115,38 @@ export default function App() {
     localStorage.setItem("gws_webapp_url", settingsUrl);
     setWebAppUrl(settingsUrl);
     alert("設定已儲存！");
+  };
+
+  const handleTopup = async () => {
+    if (!topupId.trim() || !webAppUrl) return;
+    setTopupLoading(true);
+    setTopupError(null);
+    setTopupSuccess(null);
+    try {
+      const res = await fetch(webAppUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ 
+          action: "topup", 
+          id: topupId.trim(), 
+          name: topupName.trim(), 
+          points: parseInt(topupPoints, 10) || 0 
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTopupSuccess(`儲值成功！${data.isNew ? "已建立新會員。" : "已更新現有會員。"} 最新餘額：${data.remaining} 杯`);
+        if (memberData && memberData.id === topupId.trim()) {
+           setMemberData({ ...memberData, remaining: data.remaining });
+        }
+      } else {
+        setTopupError(data.message || "儲值失敗");
+      }
+    } catch (err) {
+      setTopupError("連線失敗，請稍後重試。");
+    } finally {
+      setTopupLoading(false);
+    }
   };
 
   const handleGenerateQr = () => {
@@ -212,8 +253,9 @@ export default function App() {
         </div>
 
         <Tabs defaultValue="query" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 max-w-md mb-6">
+          <TabsList className="grid w-full grid-cols-4 max-w-2xl mb-6">
             <TabsTrigger value="query">查詢與扣點</TabsTrigger>
+            <TabsTrigger value="topup">儲值與建立</TabsTrigger>
             <TabsTrigger value="qrcode">產生 QR Code</TabsTrigger>
             <TabsTrigger value="settings">系統設定</TabsTrigger>
           </TabsList>
@@ -292,6 +334,66 @@ export default function App() {
                     </div>
                 </div>
               </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="topup">
+            <Card>
+              <CardHeader>
+                <CardTitle>會員儲值與建立</CardTitle>
+                <CardDescription>輸入會員編號為現有會員儲值，若會員不存在將自動建立新會員。</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">會員編號 (必填)</label>
+                    <Input 
+                      placeholder="例如：A001" 
+                      value={topupId} 
+                      onChange={e => setTopupId(e.target.value)} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">會員姓名 (建立新會員必填)</label>
+                    <Input 
+                      placeholder="例如：王大明" 
+                      value={topupName} 
+                      onChange={e => setTopupName(e.target.value)} 
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-medium">儲值杯數</label>
+                    <div className="flex gap-2">
+                      <Input 
+                        type="number"
+                        min="1"
+                        value={topupPoints} 
+                        onChange={e => setTopupPoints(e.target.value)} 
+                      />
+                      <Button variant="outline" onClick={() => setTopupPoints("10")}>+10 杯</Button>
+                      <Button variant="outline" onClick={() => setTopupPoints("20")}>+20 杯</Button>
+                    </div>
+                  </div>
+                </div>
+
+                {topupError && (
+                  <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm flex items-center gap-2 mt-4">
+                     <AlertCircle className="w-4 h-4" /> {topupError}
+                  </div>
+                )}
+                
+                {topupSuccess && (
+                  <div className="bg-green-50 text-green-700 p-3 rounded-md text-sm flex items-center gap-2 mt-4">
+                      <CheckCircle2 className="w-4 h-4" /> {topupSuccess}
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter>
+                <Button onClick={handleTopup} disabled={topupLoading || !topupId.trim()}>
+                  {topupLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <PlusCircle className="w-4 h-4 mr-2" />}
+                  確認儲值 / 建立
+                </Button>
+              </CardFooter>
             </Card>
           </TabsContent>
 
