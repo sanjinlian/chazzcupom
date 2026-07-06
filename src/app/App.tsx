@@ -326,7 +326,7 @@ export default function App() {
                 <div className="pt-8 border-t">
                     <p className="text-sm text-zinc-500 mb-3">測試用會員編號：</p>
                     <div className="flex gap-2 flex-wrap">
-                        {['A001', 'B002', 'C003'].map(id => (
+                        {['T001', 'T002', 'T003'].map(id => (
                             <Button key={id} variant="outline" size="sm" onClick={() => { setQueryId(id); fetchMemberInfo(id); }}>
                                 {id}
                             </Button>
