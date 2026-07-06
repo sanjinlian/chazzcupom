@@ -27,7 +27,7 @@ interface Member {
 export default function App() {
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [webAppUrl, setWebAppUrl] = useState<string>(() => {
-    return localStorage.getItem("gws_webapp_url") || "";
+    return localStorage.getItem("gws_webapp_url") || "https://script.google.com/macros/s/AKfycbxjkiPIO9xVr4jRV-GvoS-aPvMpXPzQuVEhJVho8RE5a2_3eG25rxupmw8UUzXy17Y/exec";
   });
   
   // Redemption State
