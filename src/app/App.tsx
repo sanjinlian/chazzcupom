@@ -264,12 +264,12 @@ export default function App() {
             <Card>
               <CardHeader>
                 <CardTitle>手動查詢與扣點</CardTitle>
-                <CardDescription>輸入會員編號以查詢剩餘杯數並進行兌換操作。</CardDescription>
+                <CardDescription>輸入會員編號或姓名以查詢剩餘杯數並進行兌換操作。</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex gap-2">
                   <Input 
-                    placeholder="例如：A001" 
+                    placeholder="例如：T001 或 王小明" 
                     value={queryId} 
                     onChange={e => setQueryId(e.target.value)} 
                     onKeyDown={e => e.key === 'Enter' && fetchMemberInfo(queryId)}

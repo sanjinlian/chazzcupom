@@ -18,19 +18,29 @@ function getMembersSheet() {
 }
 
 /**
- * 根據 Member ID 查找會員所在的行數
- * @param {string} memberId - 會員 ID
+ * 根據會員 ID 或 姓名 查找會員所在的行數
+ * @param {string} query - 會員 ID 或 姓名
  * @returns {number} 會員所在的行數 (1-based)，如果找不到則返回 -1
  */
-function findMemberRow(memberId) {
+function findMemberRow(query) {
   const sheet = getMembersSheet();
   if (!sheet) return -1;
   const data = sheet.getDataRange().getValues();
-  for (let i = 1; i < data.length; i++) { // 從第二行開始找，跳過標題行
-    if (data[i][ID_COL - 1] === memberId) {
-      return i + 1; // 返回 1-based 行數
+  
+  // 第一階段：精確比對 ID
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][ID_COL - 1]).trim() === String(query).trim()) {
+      return i + 1;
     }
   }
+  
+  // 第二階段：精確比對姓名
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][NAME_COL - 1]).trim() === String(query).trim()) {
+      return i + 1;
+    }
+  }
+  
   return -1;
 }
 
